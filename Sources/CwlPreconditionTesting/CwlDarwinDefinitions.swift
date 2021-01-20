@@ -18,7 +18,7 @@
 //  IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-#if (os(macOS) || os(iOS)) && arch(x86_64)
+#if (os(macOS) || os(iOS)) && (arch(x86_64) || arch(arm64))
 
 import Darwin
 
@@ -41,7 +41,11 @@ public let EXC_MASK_BAD_INSTRUCTION: UInt32 = 1 << EXC_BAD_INSTRUCTION
 // From /usr/include/mach/i386/thread_status.h
 // #define x86_THREAD_STATE64_COUNT	((mach_msg_type_number_t) \
 //		( sizeof (x86_thread_state64_t) / sizeof (int) ))
+#if arch(x86_64)
 public let x86_THREAD_STATE64_COUNT = UInt32(MemoryLayout<x86_thread_state64_t>.size / MemoryLayout<Int32>.size)
+#else // arch(arm64)
+public let x86_THREAD_STATE64_COUNT = UInt32(MemoryLayout<arm_thread_state_t>.size / MemoryLayout<Int32>.size)
+#endif
 
 public let EXC_TYPES_COUNT = 14
 public struct execTypesCountTuple<T: ExpressibleByIntegerLiteral> {

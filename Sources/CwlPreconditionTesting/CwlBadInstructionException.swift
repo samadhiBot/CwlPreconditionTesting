@@ -18,7 +18,7 @@
 //  IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 //
 
-#if (os(macOS) || os(iOS)) && arch(x86_64)
+#if (os(macOS) || os(iOS)) && (arch(x86_64) || arch(arm64))
 
 import Foundation
 
@@ -60,8 +60,12 @@ public class BadInstructionException: NSException {
 		}
 		
 		// Read the old thread state
+        #if arch(x86_64)
 		var state = old_state.withMemoryRebound(to: x86_thread_state64_t.self, capacity: 1) { return $0.pointee }
-		
+        #else // arch(arm64)
+		var state = old_state.withMemoryRebound(to: arm_thread_state_t.self, capacity: 1) { return $0.pointee }
+        #endif
+
 		// 1. Decrement the stack pointer
 		state.__rsp -= __uint64_t(MemoryLayout<Int>.size)
 		
@@ -79,7 +83,11 @@ public class BadInstructionException: NSException {
 		}
 		
 		// Write the new thread state
+        #if arch(x86_64)
 		new_state.withMemoryRebound(to: x86_thread_state64_t.self, capacity: 1) { $0.pointee = state }
+        #else // arch(arm64)
+		new_state.withMemoryRebound(to: arm_thread_state_t.self, capacity: 1) { $0.pointee = state }
+        #endif
 		new_stateCnt.pointee = x86_THREAD_STATE64_COUNT
 		
 		return NSNumber(value: KERN_SUCCESS)
